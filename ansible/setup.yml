@@ -1,18 +1,12 @@
-- name: DevOps Setup Demo
+- name: DevOps Setup
   hosts: localhost
   connection: local
   become: yes
 
   tasks:
-
     - name: Update system
       apt:
         update_cache: yes
-
-    - name: Install curl
-      apt:
-        name: curl
-        state: present
 
     - name: Install Docker
       apt:
@@ -24,5 +18,8 @@
         name: docker
         state: started
 
-    - name: Check Kubernetes files exist
+    - name: Verify Docker
+      command: docker --version
+
+    - name: Check Kubernetes files
       command: ls
