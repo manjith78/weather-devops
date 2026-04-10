@@ -5,78 +5,278 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        body {
+        * {
             margin: 0;
-            font-family: 'Segoe UI';
-            background: linear-gradient(to right, #1e3c72, #2a5298);
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
             text-align: center;
+            margin-bottom: 30px;
+            animation: slideDown 0.6s ease-out;
         }
 
-        h1 {
-            margin-top: 30px;
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
-        .container {
-            display: flex;
-            justify-content: center;
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 350px 1fr;
             gap: 30px;
-            margin-top: 40px;
-            flex-wrap: wrap;
+            max-width: 1400px;
+            margin: 0 auto;
+            align-items: start;
         }
 
-        .card {
-            background: rgba(255,255,255,0.1);
-            padding: 25px;
-            border-radius: 15px;
-            width: 300px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        .search-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.6s ease-out;
         }
 
-        input {
-            padding: 10px;
-            width: 80%;
-            border-radius: 8px;
-            border: none;
+        .search-card h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            font-weight: 400;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
-        button {
-            margin-top: 10px;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            background: #00c6ff;
+        .search-card input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
             color: white;
+            font-size: 1em;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .search-card input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .search-card input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 15px rgba(0, 198, 255, 0.3);
+        }
+
+        .search-card button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #00c6ff, #0099cc);
+            color: white;
+            font-size: 1.1em;
+            font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 15px rgba(0, 198, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .search-card button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(0, 198, 255, 0.5);
+        }
+
+        .search-card button:active {
+            transform: translateY(0);
+        }
+
+        #error {
+            color: #ff6b6b;
+            margin-top: 15px;
+            display: none;
+            font-size: 0.95em;
+            animation: shake 0.5s ease-in-out;
+            background: rgba(255, 107, 107, 0.2);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        #result {
+            margin-top: 25px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        #result h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+            font-weight: 300;
+        }
+
+        #result p {
+            font-size: 1em;
+            margin: 8px 0;
+            opacity: 0.95;
+        }
+
+        .temp-display {
+            font-size: 3em !important;
+            font-weight: 300;
+            margin: 15px 0 !important;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .detail-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.95em;
+        }
+
+        .graph-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.6s ease-out 0.1s both;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .graph-card h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            font-weight: 400;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .chart-container {
+            flex: 1;
+            position: relative;
+            margin-bottom: 10px;
         }
 
         canvas {
-            margin-top: 20px;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .demo-badge {
+            font-size: 0.85em;
+            opacity: 0.8;
+            font-style: italic;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
         }
     </style>
 </head>
 
 <body>
 
-<h1>Weather Dashboard</h1>
+<div class="header">
+    <h1>🌤️ Weather Dashboard</h1>
+    <p>Get real-time weather insights and forecasts</p>
+</div>
 
-<div class="container">
-
-    <div class="card">
-        <h3>Search Weather</h3>
-        <input type="text" id="city" placeholder="Enter City" onkeypress="if(event.key==='Enter') getWeather()">
-        <br>
+<div class="main-container">
+    <div class="search-card">
+        <h2>🔍 Search Weather</h2>
+        <input type="text" id="city" placeholder="Enter city name..." onkeypress="if(event.key==='Enter') getWeather()">
         <button onclick="getWeather()">Check Weather</button>
-        <div id="error" style="color: #ff6b6b; margin-top: 10px; display:none;"></div>
+        <div id="error"></div>
         <div id="result"></div>
     </div>
 
-    <div class="card">
-        <h3>Temperature Trend</h3>
-        <canvas id="chart"></canvas>
+    <div class="graph-card">
+        <h2>📈 Temperature Trend</h2>
+        <div class="chart-container">
+            <canvas id="chart"></canvas>
+        </div>
+        <p class="demo-badge">📊 Demo data - Replace with live API for real forecasts</p>
     </div>
-
 </div>
 
 <script>
@@ -89,7 +289,7 @@ function getWeather() {
 
     // Validation
     if (!city.trim()) {
-        errorDiv.textContent = "Please enter a city name";
+        errorDiv.textContent = "⚠️ Please enter a city name";
         errorDiv.style.display = "block";
         resultDiv.innerHTML = "";
         return;
@@ -101,13 +301,19 @@ function getWeather() {
     const temps = [22, 24, 23, 25, 26, 24, 23];
     const humidity = 65;
     const windSpeed = 12;
+    const feelsLike = 20;
+    const uvIndex = 6;
 
     resultDiv.innerHTML = 
-        "<h2>" + city + "</h2>" +
-        "<p style='font-size: 2em; margin: 10px 0;'>" + temps[0] + "°C</p>" +
-        "<p>💧 Humidity: " + humidity + "%</p>" +
-        "<p>💨 Wind: " + windSpeed + " km/h</p>" +
-        "<p style='font-size: 0.9em; color: #bbb; margin-top: 10px;'>(Demo Data)</p>";
+        "<h2>" + city.toUpperCase() + "</h2>" +
+        "<p class='temp-display'>" + temps[0] + "°C</p>" +
+        "<div class='weather-details'>" +
+        "  <div class='detail-item'>💧 Humidity: " + humidity + "%</div>" +
+        "  <div class='detail-item'>💨 Wind: " + windSpeed + " km/h</div>" +
+        "  <div class='detail-item'>🌡️ Feels Like: " + feelsLike + "°C</div>" +
+        "  <div class='detail-item'>☀️ UV Index: " + uvIndex + "</div>" +
+        "</div>" +
+        "<p class='demo-badge' style='margin-top: 15px;'>Demo data for demonstration purposes</p>";
 
     if (chart) {
         chart.destroy();
@@ -118,42 +324,85 @@ function getWeather() {
     chart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+            labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
             datasets: [{
-                label: 'Temperature °C',
+                label: 'Temperature (°C)',
                 data: temps,
                 borderColor: '#00c6ff',
-                backgroundColor: 'rgba(0,198,255,0.1)',
+                backgroundColor: 'rgba(0, 198, 255, 0.15)',
                 fill: true,
-                tension: 0.4,
+                tension: 0.5,
                 pointBackgroundColor: '#00c6ff',
                 pointBorderColor: '#fff',
-                pointRadius: 5,
-                pointHoverRadius: 7
+                pointRadius: 6,
+                pointHoverRadius: 9,
+                pointBorderWidth: 2,
+                borderWidth: 3,
+                borderCapStyle: 'round',
+                borderJoinStyle: 'round'
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    labels: { color: '#fff' }
+                    display: true,
+                    labels: {
+                        color: '#fff',
+                        font: { size: 13, weight: 'bold' },
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    padding: 12,
+                    titleFont: { size: 14 },
+                    bodyFont: { size: 13 },
+                    borderColor: '#00c6ff',
+                    borderWidth: 1,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y + '°C';
+                        }
+                    }
                 }
             },
             scales: {
                 y: {
-                    ticks: { color: '#fff' },
-                    grid: { color: 'rgba(255,255,255,0.1)' }
+                    beginAtZero: true,
+                    max: 35,
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        font: { size: 12 },
+                        stepSize: 5,
+                        callback: function(value) {
+                            return value + '°';
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    }
                 },
                 x: {
-                    ticks: { color: '#fff' },
-                    grid: { color: 'rgba(255,255,255,0.1)' }
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        font: { size: 12 }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)',
+                        drawBorder: false
+                    }
                 }
             }
         }
     });
 }
 
-// Allow Enter key to submit
+// Focus on input field when page loads
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById("city").focus();
 });
