@@ -1,25 +1,71 @@
-- name: DevOps Setup
+---
+- name: DevOps Setup - Docker Installation
   hosts: localhost
   connection: local
   become: yes
 
   tasks:
-    - name: Update system
+    - name: Update system package cache
       apt:
         update_cache: yes
+        cache_valid_time: 3600
 
-    - name: Install Docker
+    - name: Install Docker and dependencies
       apt:
-        name: docker.io
+        name:
+          - docker.io
+          - docker-compose
+          - curl
+          - wget
         state: present
 
-    - name: Start Docker
+    - name: Start Docker service
       service:
         name: docker
         state: started
+        enabled: yes
+      register: docker_start
+      failed_when: docker_start.failed and "changed" not in docker_start.msg
 
-    - name: Verify Docker
+    - name: Verify Docker installation
       command: docker --version
+      register: docker_version
+      changed_when: false
 
-    - name: Check Kubernetes files
-      command: ls
+    - name: Display Docker version
+      debug:
+        msg: "Docker installed: {{ docker_version.stdout }}"
+
+    - name: Check Docker service status
+      service:
+        name: docker
+        state: started
+      register: docker_status
+      changed_when: false
+
+    - name: Add current user to docker group
+      user:
+        name: "{{ ansible_user | default('ubuntu') }}"
+        groups: docker
+        append: yes
+
+    - name: Verify Docker socket permissions
+      stat:
+        path: /var/run/docker.sock
+      register: docker_socket
+      changed_when: false
+
+    - name: Test Docker functionality
+      command: docker ps
+      register: docker_test
+      changed_when: false
+      ignore_errors: yes
+
+    - name: Display setup summary
+      debug:
+        msg:
+          - "✅ Docker Setup Complete"
+          - "Docker Version: {{ docker_version.stdout }}"
+          - "Docker Status: {{ docker_status.state | upper }}"
+          - "Docker Socket: {{ 'Exists' if docker_socket.stat.exists else 'Missing' }}"
+          - "Docker Test: {{ 'Passed' if docker_test.rc == 0 else 'Check manually' }}"
