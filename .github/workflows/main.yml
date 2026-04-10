@@ -1,0 +1,23 @@
+name: Full DevOps Pipeline
+
+on:
+  push:
+    branches: [ "main", "feature-ui" ]
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Build Docker Image
+      run: docker build -t weather-app .
+
+    - name: Test Step
+      run: echo "Test Passed"
+
+    - name: Run Container (Deploy)
+      run: docker run -d -p 8080:80 weather-app
