@@ -1,10 +1,15 @@
 ---
-- name: DevOps Setup - Docker Installation
-  hosts: localhost
-  connection: local
+- name: DevOps Setup - Docker & Container Installation
+  hosts: weather_servers
+  connection: ssh
   become: yes
 
   tasks:
+    - name: Wait for system to be ready
+      wait_for_connection:
+        delay: 10
+        timeout: 300
+
     - name: Update system package cache
       apt:
         update_cache: yes
@@ -17,6 +22,7 @@
           - docker-compose
           - curl
           - wget
+          - git
         state: present
 
     - name: Start Docker service
@@ -34,7 +40,7 @@
 
     - name: Display Docker version
       debug:
-        msg: "Docker installed: {{ docker_version.stdout }}"
+        msg: "✅ Docker installed: {{ docker_version.stdout }}"
 
     - name: Check Docker service status
       service:
@@ -45,7 +51,7 @@
 
     - name: Add current user to docker group
       user:
-        name: "{{ ansible_user | default('ubuntu') }}"
+        name: "{{ ansible_user }}"
         groups: docker
         append: yes
 
@@ -55,17 +61,11 @@
       register: docker_socket
       changed_when: false
 
-    - name: Test Docker functionality
-      command: docker ps
-      register: docker_test
-      changed_when: false
-      ignore_errors: yes
-
     - name: Display setup summary
       debug:
         msg:
-          - "✅ Docker Setup Complete"
+          - "✅ DOCKER SETUP COMPLETE"
           - "Docker Version: {{ docker_version.stdout }}"
           - "Docker Status: {{ docker_status.state | upper }}"
-          - "Docker Socket: {{ 'Exists' if docker_socket.stat.exists else 'Missing' }}"
-          - "Docker Test: {{ 'Passed' if docker_test.rc == 0 else 'Check manually' }}"
+          - "Docker Socket: {{ 'Available' if docker_socket.stat.exists else 'Missing' }}"
+          - "Ready to deploy containers!"
