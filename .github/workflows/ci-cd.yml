@@ -45,3 +45,89 @@ jobs:
         echo "✅ Build completed successfully"
         echo "Image: ${{ secrets.DOCKER_USERNAME }}/weather-app"
         echo "Commit: ${{ github.sha }}"
+
+  provision-aks:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    outputs:
+      cluster_name: ${{ steps.terraform.outputs.cluster_name }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.7.0
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Terraform Init
+      working-directory: terraform-aks
+      run: terraform init
+    
+    - name: Terraform Plan
+      working-directory: terraform-aks
+      run: terraform plan -out=tfplan
+    
+    - name: Terraform Apply
+      working-directory: terraform-aks
+      id: terraform
+      run: |
+        terraform apply -auto-approve tfplan
+        echo "cluster_name=$(terraform output -raw cluster_name)" >> $GITHUB_OUTPUT
+    
+    - name: Get AKS Credentials
+      run: |
+        az aks get-credentials \
+          --resource-group weather-rg \
+          --name weather-aks \
+          --file ./kubeconfig
+    
+    - name: Test kubectl Connection
+      run: |
+        export KUBECONFIG=./kubeconfig
+        kubectl get nodes
+        kubectl version --short
+
+  deploy-to-kubernetes:
+    needs: [build-and-push, provision-aks]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Get AKS Credentials
+      run: |
+        az aks get-credentials \
+          --resource-group weather-rg \
+          --name weather-aks \
+          --file ./kubeconfig
+    
+    - name: Update image in deployment manifest
+      run: |
+        sed -i "s|urk23cs1011/weather-app:latest|${{ secrets.DOCKER_USERNAME }}/weather-app:latest|g" deployment.yaml
+        sed -i "s|urk23cs1011/weather-app:latest|${{ secrets.DOCKER_USERNAME }}/weather-app:latest|g" deployment.yaml
+    
+    - name: Deploy to AKS
+      run: |
+        export KUBECONFIG=./kubeconfig
+        kubectl apply -f deployment.yaml
+        kubectl apply -f service.yaml
+        echo "---"
+        echo "✅ Deployment completed!"
+        echo "Checking deployment status..."
+        kubectl get deployments
+        kubectl get pods
+        kubectl get svc weather-service
